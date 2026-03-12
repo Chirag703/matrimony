@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Subscriptions - Matrimony Admin</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <style>
+        body { background-color: #f8f9fa; }
+        .sidebar { min-height: 100vh; background: linear-gradient(180deg, #c0392b, #e84393); }
+        .sidebar .nav-link { color: rgba(255,255,255,0.85); padding: 10px 20px; }
+        .sidebar .nav-link:hover, .sidebar .nav-link.active { color: #fff; background: rgba(255,255,255,0.2); border-radius: 8px; }
+        .sidebar .brand { color: #fff; font-size: 1.4rem; font-weight: 700; padding: 20px; }
+        .content-area { padding: 30px; }
+    </style>
+</head>
+<body>
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-2 p-0 sidebar">
+            <div class="brand">💑 Matrimony</div>
+            <nav class="nav flex-column p-2">
+                <a class="nav-link" th:href="@{/admin/dashboard}"><i class="bi bi-speedometer2 me-2"></i>Dashboard</a>
+                <a class="nav-link" th:href="@{/admin/users}"><i class="bi bi-people me-2"></i>Users</a>
+                <a class="nav-link" th:href="@{/admin/profiles}"><i class="bi bi-person-badge me-2"></i>Profiles</a>
+                <a class="nav-link active" th:href="@{/admin/subscriptions}"><i class="bi bi-credit-card me-2"></i>Subscriptions</a>
+                <a class="nav-link" th:href="@{/admin/reports}"><i class="bi bi-flag me-2"></i>Reports</a>
+                <hr style="border-color: rgba(255,255,255,0.3);">
+                <form th:action="@{/admin/logout}" method="post" class="p-2">
+                    <button type="submit" class="btn btn-outline-light btn-sm w-100">Logout</button>
+                </form>
+            </nav>
+        </div>
+
+        <div class="col-md-10 content-area">
+            <h2 class="mb-4">Subscription Management</h2>
+
+            <!-- Revenue Stats -->
+            <div class="row g-4 mb-4">
+                <div class="col-md-4">
+                    <div class="card text-center p-3 border-success border-2">
+                        <h3 class="text-success">₹<span th:text="${totalRevenue != null ? totalRevenue : '0.00'}">0.00</span></h3>
+                        <p class="text-muted mb-0">Total Revenue</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card text-center p-3 border-primary border-2">
+                        <h3 class="text-primary" th:text="${activeCount}">0</h3>
+                        <p class="text-muted mb-0">Active Subscriptions</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card text-center p-3 border-warning border-2">
+                        <h3 class="text-warning" th:text="${subscriptions != null ? subscriptions.size() : 0}">0</h3>
+                        <p class="text-muted mb-0">Total Subscriptions</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Subscription Plans Info -->
+            <div class="row g-3 mb-4">
+                <div class="col-md-4">
+                    <div class="card border-secondary">
+                        <div class="card-header bg-secondary text-white">Basic Plan</div>
+                        <div class="card-body">
+                            <h4>₹999 / month</h4>
+                            <ul class="list-unstyled">
+                                <li>✅ Unlimited profile views</li>
+                                <li>✅ Unlimited chats</li>
+                                <li>✅ View phone numbers</li>
+                                <li>✅ 1 Month duration</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card border-warning">
+                        <div class="card-header bg-warning text-dark">Gold Plan</div>
+                        <div class="card-body">
+                            <h4>₹2,499 / 3 months</h4>
+                            <ul class="list-unstyled">
+                                <li>✅ All Basic features</li>
+                                <li>✅ Profile boost</li>
+                                <li>✅ Advanced filters</li>
+                                <li>✅ 3 Months duration</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card border-info">
+                        <div class="card-header bg-info text-white">Platinum Plan</div>
+                        <div class="card-body">
+                            <h4>₹3,999 / 6 months</h4>
+                            <ul class="list-unstyled">
+                                <li>✅ All Gold features</li>
+                                <li>✅ Priority placement</li>
+                                <li>✅ Who viewed you</li>
+                                <li>✅ 6 Months duration</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Subscriptions Table -->
+            <div class="card shadow-sm">
+                <div class="card-header"><strong>Subscription History</strong></div>
+                <div class="card-body p-0">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>ID</th>
+                                <th>User</th>
+                                <th>Plan</th>
+                                <th>Amount</th>
+                                <th>Start Date</th>
+                                <th>End Date</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="sub : ${subscriptions}">
+                                <td th:text="${sub.id}"></td>
+                                <td>
+                                    <span th:text="${sub.user.name != null ? sub.user.name : 'N/A'}"></span>
+                                    <br><small class="text-muted" th:text="${sub.user.phone}"></small>
+                                </td>
+                                <td>
+                                    <span th:if="${sub.plan.name() == 'BASIC'}" class="badge bg-secondary">Basic</span>
+                                    <span th:if="${sub.plan.name() == 'GOLD'}" class="badge bg-warning text-dark">Gold</span>
+                                    <span th:if="${sub.plan.name() == 'PLATINUM'}" class="badge bg-info">Platinum</span>
+                                </td>
+                                <td>₹<span th:text="${sub.amount}"></span></td>
+                                <td th:text="${sub.startDate}"></td>
+                                <td th:text="${sub.endDate}"></td>
+                                <td>
+                                    <span th:if="${sub.active}" class="badge bg-success">Active</span>
+                                    <span th:unless="${sub.active}" class="badge bg-secondary">Expired</span>
+                                </td>
+                            </tr>
+                            <tr th:if="${subscriptions == null or subscriptions.isEmpty()}">
+                                <td colspan="7" class="text-center py-4 text-muted">No subscriptions found</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Detail - Matrimony Admin</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <style>
+        body { background-color: #f8f9fa; }
+        .sidebar { min-height: 100vh; background: linear-gradient(180deg, #c0392b, #e84393); }
+        .sidebar .nav-link { color: rgba(255,255,255,0.85); padding: 10px 20px; }
+        .sidebar .nav-link:hover { color: #fff; background: rgba(255,255,255,0.2); border-radius: 8px; }
+        .sidebar .brand { color: #fff; font-size: 1.4rem; font-weight: 700; padding: 20px; }
+        .content-area { padding: 30px; }
+    </style>
+</head>
+<body>
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-2 p-0 sidebar">
+            <div class="brand">💑 Matrimony</div>
+            <nav class="nav flex-column p-2">
+                <a class="nav-link" th:href="@{/admin/dashboard}"><i class="bi bi-speedometer2 me-2"></i>Dashboard</a>
+                <a class="nav-link active" th:href="@{/admin/users}"><i class="bi bi-people me-2"></i>Users</a>
+                <a class="nav-link" th:href="@{/admin/profiles}"><i class="bi bi-person-badge me-2"></i>Profiles</a>
+                <a class="nav-link" th:href="@{/admin/subscriptions}"><i class="bi bi-credit-card me-2"></i>Subscriptions</a>
+                <a class="nav-link" th:href="@{/admin/reports}"><i class="bi bi-flag me-2"></i>Reports</a>
+                <hr style="border-color: rgba(255,255,255,0.3);">
+                <form th:action="@{/admin/logout}" method="post" class="p-2">
+                    <button type="submit" class="btn btn-outline-light btn-sm w-100">Logout</button>
+                </form>
+            </nav>
+        </div>
+
+        <div class="col-md-10 content-area">
+            <div class="d-flex align-items-center mb-4">
+                <a th:href="@{/admin/users}" class="btn btn-outline-secondary me-3">
+                    <i class="bi bi-arrow-left"></i> Back
+                </a>
+                <h2>User Detail</h2>
+            </div>
+
+            <div class="row g-4">
+                <div class="col-md-6">
+                    <div class="card shadow-sm">
+                        <div class="card-header bg-dark text-white">
+                            <i class="bi bi-person me-2"></i>Basic Information
+                        </div>
+                        <div class="card-body">
+                            <table class="table table-borderless">
+                                <tr>
+                                    <th>ID:</th>
+                                    <td th:text="${user.id}"></td>
+                                </tr>
+                                <tr>
+                                    <th>Name:</th>
+                                    <td th:text="${user.name != null ? user.name : 'Not set'}"></td>
+                                </tr>
+                                <tr>
+                                    <th>Phone:</th>
+                                    <td th:text="${user.phone}"></td>
+                                </tr>
+                                <tr>
+                                    <th>Gender:</th>
+                                    <td th:text="${user.gender != null ? user.gender : 'Not set'}"></td>
+                                </tr>
+                                <tr>
+                                    <th>Date of Birth:</th>
+                                    <td th:text="${user.dob != null ? user.dob : 'Not set'}"></td>
+                                </tr>
+                                <tr>
+                                    <th>Premium:</th>
+                                    <td>
+                                        <span th:if="${user.premium}" class="badge bg-warning text-dark">Yes</span>
+                                        <span th:unless="${user.premium}" class="badge bg-secondary">No</span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th>Status:</th>
+                                    <td>
+                                        <span th:if="${user.banned}" class="badge bg-danger">Banned</span>
+                                        <span th:unless="${user.banned}" class="badge bg-success">Active</span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th>Onboarding:</th>
+                                    <td>
+                                        <span th:if="${user.onboardingComplete}" class="badge bg-success">Complete</span>
+                                        <span th:unless="${user.onboardingComplete}" class="badge bg-warning text-dark">Incomplete</span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th>Joined:</th>
+                                    <td th:text="${user.createdAt != null ? user.createdAt : 'N/A'}"></td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="card shadow-sm">
+                        <div class="card-header bg-dark text-white">
+                            <i class="bi bi-gear me-2"></i>Actions
+                        </div>
+                        <div class="card-body d-flex flex-column gap-2">
+                            <form th:if="${!user.banned}"
+                                  th:action="@{/admin/users/ban/{id}(id=${user.id})}" method="post">
+                                <button type="submit" class="btn btn-warning w-100"
+                                        onclick="return confirm('Ban this user?')">
+                                    <i class="bi bi-slash-circle me-2"></i>Ban User
+                                </button>
+                            </form>
+                            <form th:if="${user.banned}"
+                                  th:action="@{/admin/users/unban/{id}(id=${user.id})}" method="post">
+                                <button type="submit" class="btn btn-success w-100">
+                                    <i class="bi bi-check-circle me-2"></i>Unban User
+                                </button>
+                            </form>
+                            <form th:unless="${user.premium}"
+                                  th:action="@{/admin/users/upgrade-premium/{id}(id=${user.id})}" method="post">
+                                <button type="submit" class="btn btn-warning w-100">
+                                    <i class="bi bi-star me-2"></i>Upgrade to Premium
+                                </button>
+                            </form>
+                            <form th:action="@{/admin/users/delete/{id}(id=${user.id})}" method="post">
+                                <button type="submit" class="btn btn-danger w-100"
+                                        onclick="return confirm('Delete user permanently?')">
+                                    <i class="bi bi-trash me-2"></i>Delete User
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-12" th:if="${user.profile != null}">
+                    <div class="card shadow-sm">
+                        <div class="card-header bg-dark text-white">
+                            <i class="bi bi-person-badge me-2"></i>Profile Information
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <p><strong>Religion:</strong>
+                                        <span th:text="${user.profile.religion != null ? user.profile.religion : 'N/A'}"></span>
+                                    </p>
+                                    <p><strong>Caste:</strong>
+                                        <span th:text="${user.profile.caste != null ? user.profile.caste : 'N/A'}"></span>
+                                    </p>
+                                    <p><strong>Education:</strong>
+                                        <span th:text="${user.profile.education != null ? user.profile.education : 'N/A'}"></span>
+                                    </p>
+                                </div>
+                                <div class="col-md-4">
+                                    <p><strong>Occupation:</strong>
+                                        <span th:text="${user.profile.occupation != null ? user.profile.occupation : 'N/A'}"></span>
+                                    </p>
+                                    <p><strong>City:</strong>
+                                        <span th:text="${user.profile.city != null ? user.profile.city : 'N/A'}"></span>
+                                    </p>
+                                    <p><strong>Verified:</strong>
+                                        <span th:if="${user.profile.verified}" class="badge bg-success">Yes</span>
+                                        <span th:unless="${user.profile.verified}" class="badge bg-secondary">No</span>
+                                    </p>
+                                </div>
+                                <div class="col-md-4">
+                                    <p><strong>Profile Completion:</strong>
+                                        <div class="progress">
+                                            <div class="progress-bar bg-success"
+                                                 th:style="'width:' + ${user.profile.profileCompletion} + '%'"
+                                                 th:text="${user.profile.profileCompletion} + '%'"></div>
+                                        </div>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

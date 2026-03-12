@@ -1,0 +1,39 @@
+{
+  "_comment": "PLACEHOLDER - Replace this file with your actual google-services.json from the Firebase Console.",
+  "_instructions": [
+    "1. Go to https://console.firebase.google.com/",
+    "2. Create a new project (or use an existing one)",
+    "3. Add an Android app with package name: com.matrimony.app",
+    "4. Download google-services.json and replace this file",
+    "5. For iOS: download GoogleService-Info.plist and place it in ios/Runner/",
+    "6. Enable Cloud Messaging in the Firebase Console",
+    "7. Copy the Firebase service account key JSON to the Spring Boot backend:",
+    "   src/main/resources/firebase-service-account.json"
+  ],
+  "project_info": {
+    "project_number": "YOUR_PROJECT_NUMBER",
+    "project_id": "your-matrimony-project",
+    "storage_bucket": "your-matrimony-project.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:YOUR_PROJECT_NUMBER:android:YOUR_APP_ID",
+        "android_info": {
+          "package_name": "com.matrimony.app"
+        }
+      },
+      "api_key": [
+        {
+          "current_key": "YOUR_ANDROID_API_KEY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
