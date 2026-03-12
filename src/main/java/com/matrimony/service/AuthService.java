@@ -1,11 +1,12 @@
 package com.matrimony.service;
 
+import com.matrimony.client.MessageCentralClient;
 import com.matrimony.dto.AuthResponse;
+import com.matrimony.dto.MessageCentralSendOtpResponse;
+import com.matrimony.dto.MessageCentralValidateOtpResponse;
 import com.matrimony.dto.SendOtpRequest;
 import com.matrimony.dto.VerifyOtpRequest;
-import com.matrimony.entity.OtpStore;
 import com.matrimony.entity.User;
-import com.matrimony.repository.OtpStoreRepository;
 import com.matrimony.repository.UserRepository;
 import com.matrimony.security.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
@@ -13,51 +14,38 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
-import java.util.Random;
-
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class AuthService {
 
     private final UserRepository userRepository;
-    private final OtpStoreRepository otpStoreRepository;
     private final JwtTokenProvider jwtTokenProvider;
+    private final MessageCentralClient messageCentralClient;
 
     @Transactional
-    public void sendOtp(SendOtpRequest request) {
+    public MessageCentralSendOtpResponse sendOtp(SendOtpRequest request) {
         String phone = request.getPhone();
-        String otp = generateOtp();
-        LocalDateTime expiresAt = LocalDateTime.now().plusMinutes(5);
-
-        OtpStore otpStore = new OtpStore();
-        otpStore.setPhone(phone);
-        otpStore.setOtp(otp);
-        otpStore.setExpiresAt(expiresAt);
-        otpStore.setUsed(false);
-        otpStoreRepository.save(otpStore);
-
-        // In production, integrate with SMS gateway (Twilio, AWS SNS, etc.)
-        log.info("OTP for phone {}: {} (expires at {})", phone, otp, expiresAt);
+        String countryCode = request.getCountryCode();
+        log.info("Sending OTP via MessageCentral for phone: {}", phone);
+        return messageCentralClient.sendOtp(countryCode, phone);
     }
 
     @Transactional
     public AuthResponse verifyOtp(VerifyOtpRequest request) {
-        String phone = request.getPhone();
-        String otp = request.getOtp();
+        String verificationId = request.getVerificationId();
+        String code = request.getCode();
 
-        OtpStore otpStore = otpStoreRepository
-                .findTopByPhoneAndUsedFalseAndExpiresAtAfterOrderByCreatedAtDesc(
-                        phone, LocalDateTime.now())
-                .orElseThrow(() -> new IllegalArgumentException("OTP expired or not found"));
+        log.info("Validating OTP via MessageCentral for verificationId: {}", verificationId);
+        MessageCentralValidateOtpResponse otpResponse =
+                messageCentralClient.validateOtp(verificationId, code);
 
-        if (!otpStore.getOtp().equals(otp)) {
-            throw new IllegalArgumentException("Invalid OTP");
+        if (!isOtpVerified(otpResponse)) {
+            throw new IllegalArgumentException("OTP verification failed: "
+                    + (otpResponse != null ? otpResponse.getMessage() : "null response"));
         }
 
-        otpStore.setUsed(true);
-        otpStoreRepository.save(otpStore);
+        String phone = resolvePhoneNumber(otpResponse);
 
         boolean newUser = !userRepository.existsByPhone(phone);
         User user;
@@ -81,8 +69,34 @@ public class AuthService {
         return new AuthResponse(token, user.getId(), user.getOnboardingComplete(), newUser);
     }
 
-    private String generateOtp() {
-        Random random = new Random();
-        return String.format("%06d", random.nextInt(1000000));
+    private boolean isOtpVerified(MessageCentralValidateOtpResponse response) {
+        if (response == null || response.getResponseCode() == null || response.getResponseCode() != 200) {
+            return false;
+        }
+
+        if (response.getData() == null) {
+            return false;
+        }
+
+        String status = response.getData().getVerificationStatus();
+        if (status == null || status.isBlank()) {
+            return false;
+        }
+
+        return "VERIFIED".equalsIgnoreCase(status)
+                || "VERIFICATION_SUCCESS".equalsIgnoreCase(status)
+                || "VERIFICATION_COMPLETED".equalsIgnoreCase(status)
+                || "SUCCESS".equalsIgnoreCase(status);
+    }
+
+    private String resolvePhoneNumber(MessageCentralValidateOtpResponse response) {
+        if (response.getPhoneNumber() != null && !response.getPhoneNumber().isBlank()) {
+            return response.getPhoneNumber();
+        }
+        if (response.getData() != null && response.getData().getMobileNumber() != null) {
+            return response.getData().getMobileNumber();
+        }
+        throw new IllegalStateException("Phone number could not be resolved from OTP validation response");
     }
 }
+

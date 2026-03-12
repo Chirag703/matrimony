@@ -7,7 +7,10 @@ import lombok.Data;
 @Data
 public class SendOtpRequest {
 
+    @NotBlank(message = "Country code is required")
+    private String countryCode;
+
     @NotBlank(message = "Phone number is required")
-    @Pattern(regexp = "^\\+?[1-9]\\d{1,14}$", message = "Invalid phone number format")
+    @Pattern(regexp = "^[0-9]{5,15}$", message = "Invalid phone number format")
     private String phone;
 }

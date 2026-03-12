@@ -1,6 +1,8 @@
 package com.matrimony.config;
 
 import com.matrimony.dto.ApiResponse;
+import com.matrimony.exception.OtpSendFailedException;
+import com.matrimony.exception.OtpValidationFailedException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -29,6 +31,20 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(SecurityException.class)
     public ResponseEntity<ApiResponse<Void>> handleSecurity(SecurityException ex) {
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ApiResponse.error(ex.getMessage()));
+    }
+
+    @ExceptionHandler(OtpSendFailedException.class)
+    public ResponseEntity<ApiResponse<Void>> handleOtpSendFailed(OtpSendFailedException ex) {
+        log.error("OTP send failed: {}", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+                .body(ApiResponse.error("Failed to send OTP. Please try again later."));
+    }
+
+    @ExceptionHandler(OtpValidationFailedException.class)
+    public ResponseEntity<ApiResponse<Void>> handleOtpValidationFailed(OtpValidationFailedException ex) {
+        log.error("OTP validation failed: {}", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+                .body(ApiResponse.error("OTP validation service error. Please try again later."));
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
