@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Browse Matches - Matrimony</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <style>
+        body { background: #f8f9fa; }
+        .topbar { background: linear-gradient(135deg, #e84393, #c0392b); }
+        .nav-link-custom { color: rgba(255,255,255,0.8); padding: 8px 16px; border-radius: 8px; text-decoration: none; }
+        .nav-link-custom:hover { color: #fff; background: rgba(255,255,255,0.2); }
+        .match-card { border: none; border-radius: 14px; box-shadow: 0 2px 12px rgba(0,0,0,0.08); transition: transform .2s, box-shadow .2s; cursor: pointer; }
+        .match-card:hover { transform: translateY(-4px); box-shadow: 0 8px 25px rgba(0,0,0,0.14); }
+        .avatar { width: 80px; height: 80px; border-radius: 50%; background: linear-gradient(135deg,#e84393,#c0392b); display:flex; align-items:center; justify-content:center; font-size:2rem; color:#fff; margin: 0 auto; }
+        .badge-verified { background:#e8f5e9; color:#2e7d32; font-size:0.7rem; padding:3px 8px; border-radius:20px; }
+        .badge-premium { background:#fff3e0; color:#e65100; font-size:0.7rem; padding:3px 8px; border-radius:20px; }
+        .interest-btn { background: linear-gradient(135deg,#e84393,#c0392b); border:none; color:#fff; border-radius:50px; padding:6px 18px; }
+        .interest-btn:hover { opacity: 0.9; color:#fff; }
+        .interest-btn.sent { background: #6c757d; }
+        .filter-bar { background: #fff; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.06); }
+        .page-header { background: linear-gradient(135deg,#e84393,#c0392b); border-radius: 14px; }
+    </style>
+</head>
+<body>
+    <!-- Top Navigation -->
+    <nav class="navbar topbar px-4 py-2">
+        <a class="navbar-brand text-white fw-bold fs-5" href="/">💑 Matrimony</a>
+        <div class="d-flex align-items-center gap-3">
+            <a th:href="@{/dashboard}" class="nav-link-custom">
+                <i class="bi bi-house-fill me-1"></i>Dashboard
+            </a>
+            <a th:href="@{/profile}" class="nav-link-custom">
+                <i class="bi bi-person-fill me-1"></i>Profile
+            </a>
+            <button class="btn btn-sm btn-outline-light" onclick="logout()">
+                <i class="bi bi-box-arrow-right me-1"></i>Logout
+            </button>
+        </div>
+    </nav>
+
+    <div class="container py-4">
+        <!-- Page Header -->
+        <div class="page-header text-white p-4 mb-4">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <div>
+                    <h4 class="fw-bold mb-1"><i class="bi bi-people-fill me-2"></i>Browse Matches</h4>
+                    <p class="mb-0 opacity-75 small">Find your perfect life partner from verified profiles</p>
+                </div>
+                <span class="badge bg-white text-danger fw-bold fs-6 px-3 py-2">
+                    <span id="matchTotalCount">--</span> matches found
+                </span>
+            </div>
+        </div>
+
+        <!-- Filters -->
+        <div class="card filter-bar p-3 mb-4">
+            <div class="row g-2 align-items-end">
+                <div class="col-md-3 col-6">
+                    <label class="form-label small text-muted">Age Range</label>
+                    <div class="d-flex gap-1 align-items-center">
+                        <input type="number" class="form-control form-control-sm" id="filterMinAge" placeholder="Min" min="18" max="80">
+                        <span class="text-muted">-</span>
+                        <input type="number" class="form-control form-control-sm" id="filterMaxAge" placeholder="Max" min="18" max="80">
+                    </div>
+                </div>
+                <div class="col-md-2 col-6">
+                    <label class="form-label small text-muted">Religion</label>
+                    <select class="form-select form-select-sm" id="filterReligion">
+                        <option value="">Any</option>
+                        <option>Hindu</option><option>Muslim</option>
+                        <option>Christian</option><option>Sikh</option>
+                        <option>Buddhist</option><option>Jain</option>
+                    </select>
+                </div>
+                <div class="col-md-3 col-6">
+                    <label class="form-label small text-muted">Location</label>
+                    <input type="text" class="form-control form-control-sm" id="filterLocation" placeholder="City or State">
+                </div>
+                <div class="col-md-2 col-6">
+                    <label class="form-label small text-muted">Show</label>
+                    <select class="form-select form-select-sm" id="filterLimit">
+                        <option value="10">10 profiles</option>
+                        <option value="20">20 profiles</option>
+                        <option value="50">50 profiles</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <button class="btn btn-danger btn-sm w-100" onclick="applyFilters()">
+                        <i class="bi bi-funnel me-1"></i>Apply
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Matches Grid -->
+        <div class="row g-3" id="matchesGrid">
+            <div class="col-12 text-center py-5 text-muted" id="loadingSpinner">
+                <div class="spinner-border text-danger" role="status"></div>
+                <p class="mt-3">Loading matches...</p>
+            </div>
+        </div>
+
+        <!-- Empty State -->
+        <div class="text-center py-5 d-none" id="emptyState">
+            <i class="bi bi-search text-muted" style="font-size:4rem;"></i>
+            <h5 class="text-muted mt-3">No matches found</h5>
+            <p class="text-muted">Try adjusting your filters or complete your profile to get better suggestions.</p>
+            <a th:href="@{/profile}" class="btn btn-danger">
+                <i class="bi bi-person-fill me-2"></i>Complete Profile
+            </a>
+        </div>
+
+        <!-- Upgrade Banner (shown for non-premium users) -->
+        <div class="card border-0 mt-4 d-none" id="upgradePrompt"
+             style="background:linear-gradient(135deg,#fff3e0,#fce4ec);border-radius:14px;">
+            <div class="card-body p-4 text-center">
+                <i class="bi bi-star-fill text-warning fs-2 mb-2"></i>
+                <h5 class="fw-bold">Unlock More Matches with Premium</h5>
+                <p class="text-muted">Free users can view up to 10 matches. Upgrade to Premium for unlimited access,
+                    advanced filters, and priority contact.</p>
+                <a th:href="@{/dashboard}" class="btn btn-danger px-4">
+                    <i class="bi bi-lightning-fill me-2"></i>Upgrade to Premium
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Profile Detail Modal -->
+    <div class="modal fade" id="profileModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header" style="background:linear-gradient(135deg,#e84393,#c0392b);">
+                    <h5 class="modal-title text-white fw-bold" id="modalName">Profile Details</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="text-center mb-3">
+                        <div class="avatar mx-auto mb-2" id="modalAvatar">?</div>
+                        <h4 id="modalFullName" class="fw-bold"></h4>
+                        <p class="text-muted" id="modalSubtitle"></p>
+                    </div>
+                    <div class="row g-3" id="modalDetails"></div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button class="btn btn-danger" id="modalInterestBtn">
+                        <i class="bi bi-heart me-1"></i>Send Interest
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const API_BASE = '/api';
+        let allMatches = [];
+        let sentInterests = new Set();
+
+        function getToken() { return sessionStorage.getItem('jwt_token'); }
+
+        function authFetch(url, opts = {}) {
+            opts.headers = Object.assign({ 'Authorization': 'Bearer ' + getToken() }, opts.headers || {});
+            return fetch(url, opts);
+        }
+
+        function logout() {
+            authFetch(`${API_BASE}/auth/logout`, { method: 'POST' })
+                .finally(() => { sessionStorage.clear(); window.location.href = '/login'; });
+        }
+
+        function calcAge(dob) {
+            if (!dob) return null;
+            // 365.25 days * 24h * 60m * 60s * 1000ms = 31,557,600,000 ms per year
+            const MILLIS_PER_YEAR = 3.15576e10;
+            return Math.floor((new Date() - new Date(dob)) / MILLIS_PER_YEAR);
+        }
+
+        function infoItem(label, val) {
+            if (!val) return '';
+            return `<div class="col-6"><small class="text-muted d-block">${label}</small><span class="fw-semibold">${val}</span></div>`;
+        }
+
+        function loadMatches(limit) {
+            document.getElementById('loadingSpinner').style.display = 'block';
+            document.getElementById('matchesGrid').innerHTML =
+                '<div class="col-12 text-center py-5 text-muted" id="loadingSpinner"><div class="spinner-border text-danger"></div><p class="mt-3">Loading matches...</p></div>';
+            document.getElementById('emptyState').classList.add('d-none');
+
+            authFetch(`${API_BASE}/matches?limit=${limit || 10}`)
+                .then(r => r.json())
+                .then(data => {
+                    allMatches = data.data || [];
+                    renderMatches(allMatches);
+                    document.getElementById('matchTotalCount').textContent = allMatches.length;
+                    if (allMatches.length >= 10) {
+                        document.getElementById('upgradePrompt').classList.remove('d-none');
+                    }
+                })
+                .catch(() => {
+                    document.getElementById('matchesGrid').innerHTML =
+                        '<div class="col-12 text-center text-muted py-4">Could not load matches. Please try again.</div>';
+                });
+        }
+
+        function renderMatches(matches) {
+            const grid = document.getElementById('matchesGrid');
+            grid.innerHTML = '';
+
+            if (matches.length === 0) {
+                document.getElementById('emptyState').classList.remove('d-none');
+                return;
+            }
+
+            matches.forEach(m => {
+                const age = calcAge(m.dob);
+                const initial = m.name ? m.name.charAt(0).toUpperCase() : '?';
+                const location = [m.city, m.state].filter(Boolean).join(', ') || 'India';
+                const isSent = sentInterests.has(m.userId);
+
+                const html = `
+                    <div class="col-lg-3 col-md-4 col-sm-6">
+                        <div class="card match-card p-3" onclick="showProfile(${m.userId})">
+                            <div class="text-center mb-3">
+                                <div class="avatar mb-2">${initial}</div>
+                                <h6 class="fw-bold mb-1">${m.name || 'Anonymous'}</h6>
+                                <small class="text-muted">${age ? age + ' yrs' : ''} ${age && location ? '•' : ''} ${location}</small>
+                            </div>
+                            <div class="small text-muted mb-2 text-center">
+                                ${m.religion ? `<span class="tag me-1">${m.religion}</span>` : ''}
+                                ${m.education ? `<span class="tag">${m.education}</span>` : ''}
+                            </div>
+                            <button class="btn btn-sm interest-btn w-100 ${isSent ? 'sent' : ''}"
+                                    onclick="event.stopPropagation(); sendInterest(${m.userId}, this)"
+                                    ${isSent ? 'disabled' : ''}>
+                                <i class="bi bi-heart${isSent ? '-fill' : ''} me-1"></i>
+                                ${isSent ? 'Interest Sent' : 'Send Interest'}
+                            </button>
+                        </div>
+                    </div>`;
+                grid.insertAdjacentHTML('beforeend', html);
+            });
+        }
+
+        function sendInterest(userId, btn) {
+            authFetch(`${API_BASE}/interest/send`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ targetUserId: userId })
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success !== false) {
+                    sentInterests.add(userId);
+                    if (btn) {
+                        btn.disabled = true;
+                        btn.classList.add('sent');
+                        btn.innerHTML = '<i class="bi bi-heart-fill me-1"></i>Interest Sent';
+                    }
+                    // Also update modal button
+                    const modalBtn = document.getElementById('modalInterestBtn');
+                    if (modalBtn.dataset.userId == userId) {
+                        modalBtn.disabled = true;
+                        modalBtn.innerHTML = '<i class="bi bi-heart-fill me-1"></i>Interest Sent';
+                    }
+                } else {
+                    alert(data.message || 'Could not send interest. You may have already sent it.');
+                }
+            })
+            .catch(() => alert('Network error. Please check your connection and try again.'));
+        }
+
+        function showProfile(userId) {
+            const m = allMatches.find(x => x.userId === userId);
+            if (!m) return;
+
+            const age = calcAge(m.dob);
+            document.getElementById('modalName').textContent = m.name || 'Anonymous';
+            document.getElementById('modalAvatar').textContent = m.name ? m.name.charAt(0).toUpperCase() : '?';
+            document.getElementById('modalFullName').textContent = m.name || 'Anonymous';
+            document.getElementById('modalSubtitle').textContent =
+                [age ? age + ' yrs' : null, m.city, m.state, 'India'].filter(Boolean).join(' • ');
+
+            document.getElementById('modalDetails').innerHTML =
+                infoItem('Religion', m.religion) +
+                infoItem('Education', m.education) +
+                infoItem('Occupation', m.occupation) +
+                infoItem('Height', m.height ? m.height + ' cm' : null) +
+                infoItem('City', m.city) +
+                infoItem('State', m.state) +
+                (m.about ? `<div class="col-12"><small class="text-muted d-block">About</small><p>${m.about}</p></div>` : '');
+
+            const isSent = sentInterests.has(userId);
+            const btn = document.getElementById('modalInterestBtn');
+            btn.dataset.userId = userId;
+            btn.disabled = isSent;
+            btn.innerHTML = isSent
+                ? '<i class="bi bi-heart-fill me-1"></i>Interest Sent'
+                : '<i class="bi bi-heart me-1"></i>Send Interest';
+            btn.onclick = () => sendInterest(userId, null);
+
+            new bootstrap.Modal(document.getElementById('profileModal')).show();
+        }
+
+        function applyClientFilters(matches) {
+            const minAge = parseInt(document.getElementById('filterMinAge').value) || null;
+            const maxAge = parseInt(document.getElementById('filterMaxAge').value) || null;
+            const religion = document.getElementById('filterReligion').value.toLowerCase();
+            const location = document.getElementById('filterLocation').value.toLowerCase();
+
+            let filtered = [...matches];
+            if (minAge || maxAge) {
+                filtered = filtered.filter(m => {
+                    const age = calcAge(m.dob);
+                    if (!age) return true;
+                    if (minAge && age < minAge) return false;
+                    if (maxAge && age > maxAge) return false;
+                    return true;
+                });
+            }
+            if (religion) {
+                filtered = filtered.filter(m => m.religion && m.religion.toLowerCase().includes(religion));
+            }
+            if (location) {
+                filtered = filtered.filter(m =>
+                    (m.city && m.city.toLowerCase().includes(location)) ||
+                    (m.state && m.state.toLowerCase().includes(location)));
+            }
+            renderMatches(filtered);
+            document.getElementById('matchTotalCount').textContent = filtered.length;
+        }
+
+        function applyFilters() {
+            const limit = parseInt(document.getElementById('filterLimit').value) || 10;
+            const grid = document.getElementById('matchesGrid');
+            grid.innerHTML = '<div class="col-12 text-center py-5 text-muted"><div class="spinner-border text-danger"></div><p class="mt-3">Loading matches...</p></div>';
+            document.getElementById('emptyState').classList.add('d-none');
+
+            authFetch(`${API_BASE}/matches?limit=${limit}`)
+                .then(r => r.json())
+                .then(data => {
+                    allMatches = data.data || [];
+                    applyClientFilters(allMatches);
+                    if (allMatches.length >= 10) {
+                        document.getElementById('upgradePrompt').classList.remove('d-none');
+                    }
+                })
+                .catch(() => {
+                    grid.innerHTML = '<div class="col-12 text-center text-muted py-4">Could not load matches. Please try again.</div>';
+                });
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            if (!getToken()) { window.location.href = '/login'; return; }
+            loadMatches(10);
+        });
+    </script>
+</body>
+</html>
