@@ -3,10 +3,8 @@ package com.matrimony.service;
 import com.matrimony.dto.InterestDto;
 import com.matrimony.entity.Interest;
 import com.matrimony.entity.Interest.Status;
-import com.matrimony.entity.Notification;
 import com.matrimony.entity.User;
 import com.matrimony.repository.InterestRepository;
-import com.matrimony.repository.NotificationRepository;
 import com.matrimony.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -21,7 +19,7 @@ public class InterestService {
 
     private final InterestRepository interestRepository;
     private final UserRepository userRepository;
-    private final NotificationRepository notificationRepository;
+    private final NotificationService notificationService;
 
     @Transactional
     public InterestDto sendInterest(Long fromUserId, Long toUserId) {
@@ -42,7 +40,7 @@ public class InterestService {
         interest.setStatus(Status.PENDING);
         interest = interestRepository.save(interest);
 
-        sendNotification(toUser, "New Interest",
+        notificationService.sendNotification(toUser, "New Interest",
                 fromUser.getName() + " has sent you an interest!", "INTEREST");
 
         return toDto(interest);
@@ -61,7 +59,7 @@ public class InterestService {
         interest = interestRepository.save(interest);
 
         if (newStatus == Status.ACCEPTED) {
-            sendNotification(interest.getFromUser(), "Interest Accepted",
+            notificationService.sendNotification(interest.getFromUser(), "Interest Accepted",
                     interest.getToUser().getName() + " accepted your interest!", "INTEREST_ACCEPTED");
         }
 
@@ -81,15 +79,6 @@ public class InterestService {
     public List<InterestDto> getPendingInterests(Long userId) {
         return interestRepository.findByToUserIdAndStatus(userId, Status.PENDING)
                 .stream().map(this::toDto).collect(Collectors.toList());
-    }
-
-    private void sendNotification(User user, String title, String message, String type) {
-        Notification notification = new Notification();
-        notification.setUser(user);
-        notification.setTitle(title);
-        notification.setMessage(message);
-        notification.setType(type);
-        notificationRepository.save(notification);
     }
 
     private InterestDto toDto(Interest interest) {

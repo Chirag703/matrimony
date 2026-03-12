@@ -3,10 +3,8 @@ package com.matrimony.service;
 import com.matrimony.dto.InterestDto;
 import com.matrimony.entity.Interest;
 import com.matrimony.entity.Interest.Status;
-import com.matrimony.entity.Notification;
 import com.matrimony.entity.User;
 import com.matrimony.repository.InterestRepository;
-import com.matrimony.repository.NotificationRepository;
 import com.matrimony.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -33,7 +31,7 @@ class InterestServiceTest {
     private UserRepository userRepository;
 
     @Mock
-    private NotificationRepository notificationRepository;
+    private NotificationService notificationService;
 
     @InjectMocks
     private InterestService interestService;
@@ -68,7 +66,7 @@ class InterestServiceTest {
         savedInterest.setCreatedAt(LocalDateTime.now());
 
         when(interestRepository.save(any(Interest.class))).thenReturn(savedInterest);
-        when(notificationRepository.save(any(Notification.class))).thenAnswer(inv -> inv.getArgument(0));
+        doNothing().when(notificationService).sendNotification(any(User.class), anyString(), anyString(), anyString());
 
         InterestDto result = interestService.sendInterest(1L, 2L);
 
@@ -76,6 +74,7 @@ class InterestServiceTest {
         assertThat(result.getStatus()).isEqualTo(Status.PENDING);
         assertThat(result.getFromUserId()).isEqualTo(1L);
         assertThat(result.getToUserId()).isEqualTo(2L);
+        verify(notificationService).sendNotification(eq(userB), anyString(), anyString(), anyString());
     }
 
     @Test
@@ -105,11 +104,12 @@ class InterestServiceTest {
 
         when(interestRepository.findById(1L)).thenReturn(Optional.of(interest));
         when(interestRepository.save(any(Interest.class))).thenAnswer(inv -> inv.getArgument(0));
-        when(notificationRepository.save(any(Notification.class))).thenAnswer(inv -> inv.getArgument(0));
+        doNothing().when(notificationService).sendNotification(any(User.class), anyString(), anyString(), anyString());
 
         InterestDto result = interestService.respondToInterest(1L, 2L, Status.ACCEPTED);
 
         assertThat(result.getStatus()).isEqualTo(Status.ACCEPTED);
+        verify(notificationService).sendNotification(eq(userA), anyString(), anyString(), anyString());
     }
 
     @Test

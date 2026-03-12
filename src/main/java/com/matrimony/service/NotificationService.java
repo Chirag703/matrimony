@@ -2,12 +2,14 @@ package com.matrimony.service;
 
 import com.matrimony.dto.NotificationDto;
 import com.matrimony.entity.Notification;
+import com.matrimony.entity.User;
 import com.matrimony.repository.NotificationRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -15,6 +17,7 @@ import java.util.stream.Collectors;
 public class NotificationService {
 
     private final NotificationRepository notificationRepository;
+    private final FcmService fcmService;
 
     public List<NotificationDto> getNotifications(Long userId) {
         return notificationRepository.findByUserIdOrderByCreatedAtDesc(userId)
@@ -42,6 +45,30 @@ public class NotificationService {
                     notification.setReadStatus(true);
                     notificationRepository.save(notification);
                 });
+    }
+
+    /**
+     * Persist an in-app notification and push it via FCM to the user's device.
+     */
+    @Transactional
+    public void sendNotification(User user, String title, String message, String type) {
+        // 1. Persist in-app notification
+        Notification notification = new Notification();
+        notification.setUser(user);
+        notification.setTitle(title);
+        notification.setMessage(message);
+        notification.setType(type);
+        notificationRepository.save(notification);
+
+        // 2. Push FCM notification to the user's device
+        if (user.getFcmToken() != null && !user.getFcmToken().isBlank()) {
+            fcmService.sendNotification(
+                    user.getFcmToken(),
+                    title,
+                    message,
+                    Map.of("type", type)
+            );
+        }
     }
 
     private NotificationDto toDto(Notification notification) {

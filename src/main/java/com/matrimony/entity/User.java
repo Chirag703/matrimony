@@ -45,6 +45,9 @@ public class User {
     @Column(name = "last_active")
     private LocalDateTime lastActive;
 
+    @Column(name = "fcm_token", length = 512)
+    private String fcmToken;
+
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private Profile profile;
 
