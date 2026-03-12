@@ -1,35 +1,35 @@
 
-include:
-  - path: ../mailcow-dockerized/docker-compose.yml
-    project_directory: ../mailcow-dockerized
-    env_file:
-      - ../mailcow-dockerized/mailcow.conf
+version: '3.8'
 
 services:
-
+  # ── MySQL Database ─────────────────────────────────────────────────────────
   mysql:
     image: mysql:8.0
-    container_name: mysql-db
+    container_name: matrimony-mysql
     restart: unless-stopped
     environment:
-      MYSQL_ROOT_PASSWORD: Root@11804188
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-matrimony_db}
+      MYSQL_USER: ${MYSQL_USER:-matrimony}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
     volumes:
       - mysql_data:/var/lib/mysql
-      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./database/schema.sql:/docker-entrypoint-initdb.d/schema.sql:ro
     networks:
-      - backend-network
+      - matrimony-network
     ports:
       - "3306:3306"
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-pRoot@11804188"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-p${MYSQL_ROOT_PASSWORD}"]
       interval: 10s
       timeout: 5s
       retries: 5
       start_period: 30s
 
+  # ── phpMyAdmin ─────────────────────────────────────────────────────────────
   phpmyadmin:
     image: phpmyadmin/phpmyadmin
-    container_name: phpmyadmin
+    container_name: matrimony-phpmyadmin
     restart: unless-stopped
     environment:
       PMA_HOST: mysql
@@ -37,64 +37,67 @@ services:
     depends_on:
       - mysql
     networks:
-      - backend-network
+      - matrimony-network
+    ports:
+      - "8081:80"
 
-  workbridge:
+  # ── Spring Boot Backend ────────────────────────────────────────────────────
+  backend:
     build:
-      context: ../workbridge
+      context: .
       dockerfile: Dockerfile
-    container_name: workbridge
+    container_name: matrimony-backend
     restart: unless-stopped
-    environment:
-      DB_HOST: mysql-db
-      DB_PORT: 3306
-      DB_USER: workbridge
-      DB_PASSWORD: Workbridge@11804188
-      SERVER_PORT: 8089
-      MAIL_HOST: postfix-mailcow
-      MAIL_PORT: 587
-      MAIL_USERNAME: support@workbridge.in
-      MAIL_PASSWORD: Support@230
-      APP_BASE_URL: https://workbridge.in
-    volumes:
-      - workbridge_uploads:/app/uploads
     depends_on:
       mysql:
         condition: service_healthy
-    networks:
-      - backend-network
-      - mailcow-network
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/${MYSQL_DATABASE:-matrimony_db}?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_USERNAME: ${MYSQL_USER:-matrimony}
+      SPRING_DATASOURCE_PASSWORD: ${MYSQL_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRATION: ${JWT_EXPIRATION:-86400000}
+      SERVER_PORT: ${SERVER_PORT:-8080}
+      MESSAGECENTRAL_BASE_URL: ${MESSAGECENTRAL_BASE_URL:-https://cpaas.messagecentral.com}
+      MESSAGECENTRAL_AUTH_TOKEN: ${MESSAGECENTRAL_AUTH_TOKEN}
+      FIREBASE_SERVICE_ACCOUNT_KEY: ${FIREBASE_SERVICE_ACCOUNT_KEY:-firebase-service-account.json}
+      ADMIN_USERNAME: ${ADMIN_USERNAME:-admin}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD}
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-prod}
     ports:
-      - "8089:8089"
-
-  nginx-proxy-manager:
-    image: jc21/nginx-proxy-manager:latest
-    container_name: nginx-proxy-manager
-    restart: unless-stopped
+      - "8080:8080"
+    volumes:
+      - ./firebase-service-account.json:/app/BOOT-INF/classes/firebase-service-account.json:ro
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8080/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
     networks:
-      - backend-network
-      - mailcow-network
+      - matrimony-network
+
+  # ── Nginx Reverse Proxy ────────────────────────────────────────────────────
+  nginx:
+    image: nginx:alpine
+    container_name: matrimony-nginx
+    restart: unless-stopped
+    depends_on:
+      - backend
     ports:
       - "80:80"
       - "443:443"
-      - "81:81"
     volumes:
-      - npm_data:/data
-      - npm_letsencrypt:/etc/letsencrypt
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
-
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+    networks:
+      - matrimony-network
 
 networks:
-  backend-network:
+  matrimony-network:
     driver: bridge
-  mailcow-network:
-    external: true
-    name: mysql-docker_mailcow-network
 
 volumes:
   mysql_data:
-  npm_data:
-  npm_letsencrypt:
-  workbridge_uploads:
-  
+    driver: local
+

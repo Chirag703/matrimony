@@ -2,6 +2,7 @@ package com.matrimony.controller;
 
 import com.matrimony.dto.ApiResponse;
 import com.matrimony.dto.AuthResponse;
+import com.matrimony.dto.MessageCentralSendOtpResponse;
 import com.matrimony.dto.SendOtpRequest;
 import com.matrimony.dto.VerifyOtpRequest;
 import com.matrimony.service.AuthService;
@@ -13,21 +14,25 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
+@CrossOrigin(origins = "*")
 public class AuthController {
 
     private final AuthService authService;
 
     /**
-     * Step 1: Send OTP to phone number
+     * Step 1: Send OTP to phone number via MessageCentral.
+     * Returns a verificationId to be used in the validate-otp step.
      */
     @PostMapping("/send-otp")
-    public ResponseEntity<ApiResponse<Void>> sendOtp(@Valid @RequestBody SendOtpRequest request) {
-        authService.sendOtp(request);
-        return ResponseEntity.ok(ApiResponse.success("OTP sent successfully", null));
+    public ResponseEntity<ApiResponse<MessageCentralSendOtpResponse>> sendOtp(
+            @Valid @RequestBody SendOtpRequest request) {
+        MessageCentralSendOtpResponse response = authService.sendOtp(request);
+        return ResponseEntity.ok(ApiResponse.success("OTP sent successfully", response));
     }
 
     /**
-     * Step 2: Verify OTP and get JWT token
+     * Step 2: Validate OTP using verificationId + code from MessageCentral.
+     * Returns a JWT token on success.
      */
     @PostMapping("/verify-otp")
     public ResponseEntity<ApiResponse<AuthResponse>> verifyOtp(

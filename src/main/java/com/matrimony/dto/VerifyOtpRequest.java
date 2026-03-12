@@ -6,9 +6,9 @@ import lombok.Data;
 @Data
 public class VerifyOtpRequest {
 
-    @NotBlank(message = "Phone number is required")
-    private String phone;
+    @NotBlank(message = "Verification ID is required")
+    private String verificationId;
 
-    @NotBlank(message = "OTP is required")
-    private String otp;
+    @NotBlank(message = "OTP code is required")
+    private String code;
 }
