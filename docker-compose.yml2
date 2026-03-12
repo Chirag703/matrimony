@@ -1,0 +1,100 @@
+
+include:
+  - path: ../mailcow-dockerized/docker-compose.yml
+    project_directory: ../mailcow-dockerized
+    env_file:
+      - ../mailcow-dockerized/mailcow.conf
+
+services:
+
+  mysql:
+    image: mysql:8.0
+    container_name: mysql-db
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: Root@11804188
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - backend-network
+    ports:
+      - "3306:3306"
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-pRoot@11804188"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: phpmyadmin
+    restart: unless-stopped
+    environment:
+      PMA_HOST: mysql
+      PMA_PORT: 3306
+    depends_on:
+      - mysql
+    networks:
+      - backend-network
+
+  workbridge:
+    build:
+      context: ../workbridge
+      dockerfile: Dockerfile
+    container_name: workbridge
+    restart: unless-stopped
+    environment:
+      DB_HOST: mysql-db
+      DB_PORT: 3306
+      DB_USER: workbridge
+      DB_PASSWORD: Workbridge@11804188
+      SERVER_PORT: 8089
+      MAIL_HOST: postfix-mailcow
+      MAIL_PORT: 587
+      MAIL_USERNAME: support@workbridge.in
+      MAIL_PASSWORD: Support@230
+      APP_BASE_URL: https://workbridge.in
+    volumes:
+      - workbridge_uploads:/app/uploads
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - backend-network
+      - mailcow-network
+    ports:
+      - "8089:8089"
+
+  nginx-proxy-manager:
+    image: jc21/nginx-proxy-manager:latest
+    container_name: nginx-proxy-manager
+    restart: unless-stopped
+    networks:
+      - backend-network
+      - mailcow-network
+    ports:
+      - "80:80"
+      - "443:443"
+      - "81:81"
+    volumes:
+      - npm_data:/data
+      - npm_letsencrypt:/etc/letsencrypt
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+
+networks:
+  backend-network:
+    driver: bridge
+  mailcow-network:
+    external: true
+    name: mysql-docker_mailcow-network
+
+volumes:
+  mysql_data:
+  npm_data:
+  npm_letsencrypt:
+  workbridge_uploads:
+  
