@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Profile - Matrimony</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <style>
+        body { background: #f8f9fa; }
+        .topbar { background: linear-gradient(135deg, #e84393, #c0392b); }
+        .nav-link-custom { color: rgba(255,255,255,0.8); padding: 8px 16px; border-radius: 8px; text-decoration: none; }
+        .nav-link-custom:hover { color: #fff; background: rgba(255,255,255,0.2); }
+        .profile-card { border: none; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
+        .avatar-lg { width: 100px; height: 100px; border-radius: 50%; background: linear-gradient(135deg,#e84393,#c0392b); display:flex; align-items:center; justify-content:center; font-size:2.5rem; color:#fff; margin: 0 auto; }
+        .progress-bar-custom { background: linear-gradient(135deg, #e84393, #c0392b); }
+        .section-divider { border-top: 1px solid #e9ecef; padding-top: 1rem; margin-top: 1rem; }
+        .tag { background: #fce4ec; color: #e84393; border-radius: 20px; padding: 3px 12px; font-size: 0.85rem; display: inline-block; margin: 2px; }
+    </style>
+</head>
+<body>
+    <!-- Top Navigation -->
+    <nav class="navbar topbar px-4 py-2">
+        <a class="navbar-brand text-white fw-bold fs-5" href="/">💑 Matrimony</a>
+        <div class="d-flex align-items-center gap-3">
+            <a th:href="@{/dashboard}" class="nav-link-custom">
+                <i class="bi bi-house-fill me-1"></i>Dashboard
+            </a>
+            <a th:href="@{/matches}" class="nav-link-custom">
+                <i class="bi bi-people-fill me-1"></i>Matches
+            </a>
+            <button class="btn btn-sm btn-outline-light" onclick="logout()">
+                <i class="bi bi-box-arrow-right me-1"></i>Logout
+            </button>
+        </div>
+    </nav>
+
+    <div class="container py-4">
+        <div class="row g-4">
+            <!-- Profile Card (Left) -->
+            <div class="col-md-4">
+                <div class="card profile-card p-4 text-center">
+                    <div class="avatar-lg mb-3" id="avatarInitial">?</div>
+                    <h4 class="fw-bold mb-1" id="profileName">Loading...</h4>
+                    <p class="text-muted small mb-3" id="profileTagline">--</p>
+
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between small text-muted mb-1">
+                            <span>Profile Completion</span>
+                            <span id="completionPct">0%</span>
+                        </div>
+                        <div class="progress" style="height:8px;">
+                            <div class="progress-bar progress-bar-custom" id="completionBar" style="width:0%"></div>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-center gap-2 flex-wrap mb-3" id="profileTags"></div>
+
+                    <button class="btn btn-danger w-100" data-bs-toggle="modal" data-bs-target="#editModal">
+                        <i class="bi bi-pencil me-2"></i>Edit Profile
+                    </button>
+                </div>
+            </div>
+
+            <!-- Profile Details (Right) -->
+            <div class="col-md-8">
+                <div class="card profile-card p-4">
+                    <h5 class="fw-bold mb-3"><i class="bi bi-person-fill text-danger me-2"></i>Personal Information</h5>
+                    <div class="row g-3" id="personalInfo">
+                        <div class="col-12 text-center py-4 text-muted">
+                            <div class="spinner-border text-danger" role="status"></div>
+                            <p class="mt-2">Loading profile...</p>
+                        </div>
+                    </div>
+
+                    <div class="section-divider">
+                        <h5 class="fw-bold mb-3"><i class="bi bi-briefcase-fill text-danger me-2"></i>Professional Details</h5>
+                        <div class="row g-3" id="professionalInfo"></div>
+                    </div>
+
+                    <div class="section-divider">
+                        <h5 class="fw-bold mb-3"><i class="bi bi-geo-alt-fill text-danger me-2"></i>Location</h5>
+                        <div class="row g-3" id="locationInfo"></div>
+                    </div>
+
+                    <div class="section-divider" id="aboutSection" style="display:none;">
+                        <h5 class="fw-bold mb-3"><i class="bi bi-chat-quote-fill text-danger me-2"></i>About Me</h5>
+                        <p class="text-muted" id="aboutText"></p>
+                    </div>
+                </div>
+
+                <!-- Partner Preferences -->
+                <div class="card profile-card p-4 mt-4">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="fw-bold mb-0"><i class="bi bi-heart-fill text-danger me-2"></i>Partner Preferences</h5>
+                        <button class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#prefModal">
+                            <i class="bi bi-pencil me-1"></i>Edit
+                        </button>
+                    </div>
+                    <div class="row g-3" id="prefInfo">
+                        <div class="col-12 text-muted small">No preferences set yet.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Profile Modal -->
+    <div class="modal fade" id="editModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header" style="background:linear-gradient(135deg,#e84393,#c0392b);">
+                    <h5 class="modal-title text-white fw-bold">Edit Profile</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="row g-3">
+                        <div class="col-6">
+                            <label class="form-label">Religion</label>
+                            <select class="form-select" id="editReligion">
+                                <option value="">Select</option>
+                                <option>Hindu</option><option>Muslim</option>
+                                <option>Christian</option><option>Sikh</option>
+                                <option>Buddhist</option><option>Jain</option><option>Other</option>
+                            </select>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label">Marital Status</label>
+                            <select class="form-select" id="editMaritalStatus">
+                                <option value="">Select</option>
+                                <option>Never Married</option><option>Divorced</option>
+                                <option>Widowed</option><option>Separated</option>
+                            </select>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label">Height (cm)</label>
+                            <input type="text" class="form-control" id="editHeight" placeholder="e.g. 170">
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label">Caste</label>
+                            <input type="text" class="form-control" id="editCaste" placeholder="Optional">
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label">Education</label>
+                            <input type="text" class="form-control" id="editEducation">
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label">Occupation</label>
+                            <input type="text" class="form-control" id="editOccupation">
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label">Annual Income</label>
+                            <input type="text" class="form-control" id="editSalary" placeholder="e.g. 5-10 LPA">
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label">State</label>
+                            <input type="text" class="form-control" id="editState">
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label">City</label>
+                            <input type="text" class="form-control" id="editCity">
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label">Country</label>
+                            <input type="text" class="form-control" id="editCountry" value="India">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">About Yourself</label>
+                            <textarea class="form-control" id="editAbout" rows="3"></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button class="btn btn-danger" onclick="saveProfile()">
+                        <i class="bi bi-check-circle me-1"></i>Save Changes
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Partner Preferences Modal -->
+    <div class="modal fade" id="prefModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header" style="background:linear-gradient(135deg,#e84393,#c0392b);">
+                    <h5 class="modal-title text-white fw-bold">Partner Preferences</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="row g-3">
+                        <div class="col-6">
+                            <label class="form-label">Min Age</label>
+                            <input type="number" class="form-control" id="prefMinAge" min="18" max="80" placeholder="18">
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label">Max Age</label>
+                            <input type="number" class="form-control" id="prefMaxAge" min="18" max="80" placeholder="35">
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label">Religion</label>
+                            <select class="form-select" id="prefReligion">
+                                <option value="">Any</option>
+                                <option>Hindu</option><option>Muslim</option>
+                                <option>Christian</option><option>Sikh</option>
+                                <option>Buddhist</option><option>Jain</option>
+                            </select>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label">Education</label>
+                            <input type="text" class="form-control" id="prefEducation" placeholder="Any">
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label">Location</label>
+                            <input type="text" class="form-control" id="prefLocation" placeholder="Any city/state">
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label">Occupation</label>
+                            <input type="text" class="form-control" id="prefOccupation" placeholder="Any">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button class="btn btn-danger" onclick="savePreferences()">Save Preferences</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const API_BASE = '/api';
+        let currentProfile = {};
+
+        function getToken() { return sessionStorage.getItem('jwt_token'); }
+
+        function authFetch(url, opts = {}) {
+            opts.headers = Object.assign({ 'Authorization': 'Bearer ' + getToken() }, opts.headers || {});
+            return fetch(url, opts);
+        }
+
+        function logout() {
+            authFetch(`${API_BASE}/auth/logout`, { method: 'POST' })
+                .finally(() => { sessionStorage.clear(); window.location.href = '/login'; });
+        }
+
+        function infoRow(label, value) {
+            if (!value) return '';
+            return `<div class="col-sm-6">
+                <small class="text-muted d-block">${label}</small>
+                <span class="fw-semibold">${value}</span>
+            </div>`;
+        }
+
+        function loadProfile() {
+            authFetch(`${API_BASE}/profile/me`)
+                .then(r => r.json())
+                .then(data => {
+                    if (!data.data) return;
+                    const p = data.data;
+                    currentProfile = p;
+
+                    document.getElementById('avatarInitial').textContent = p.name ? p.name.charAt(0).toUpperCase() : '?';
+                    document.getElementById('profileName').textContent = p.name || 'Your Name';
+
+                    // 365.25 days * 24h * 60m * 60s * 1000ms = 31,557,600,000 ms per year
+                    const MILLIS_PER_YEAR = 3.15576e10;
+                    const age = p.dob ? Math.floor((new Date() - new Date(p.dob)) / MILLIS_PER_YEAR) : null;
+                    document.getElementById('profileTagline').textContent =
+                        [age ? age + ' yrs' : null, p.city, p.state].filter(Boolean).join(' • ') || 'Complete your profile';
+
+                    const completion = p.profileCompletion || 0;
+                    document.getElementById('completionPct').textContent = completion + '%';
+                    document.getElementById('completionBar').style.width = completion + '%';
+
+                    // Tags
+                    const tags = [p.religion, p.maritalStatus, p.education].filter(Boolean);
+                    document.getElementById('profileTags').innerHTML = tags.map(t => `<span class="tag">${t}</span>`).join('');
+
+                    // Personal info
+                    document.getElementById('personalInfo').innerHTML =
+                        infoRow('Full Name', p.name) +
+                        infoRow('Date of Birth', p.dob) +
+                        infoRow('Gender', p.gender) +
+                        infoRow('Religion', p.religion) +
+                        infoRow('Caste', p.caste) +
+                        infoRow('Marital Status', p.maritalStatus) +
+                        infoRow('Height', p.height ? p.height + ' cm' : null) ||
+                        '<div class="col-12 text-muted small">No personal details added.</div>';
+
+                    // Professional info
+                    document.getElementById('professionalInfo').innerHTML =
+                        infoRow('Education', p.education) +
+                        infoRow('Occupation', p.occupation) +
+                        infoRow('Annual Income', p.salary) ||
+                        '<div class="col-12 text-muted small">No professional details added.</div>';
+
+                    // Location info
+                    document.getElementById('locationInfo').innerHTML =
+                        infoRow('City', p.city) +
+                        infoRow('State', p.state) +
+                        infoRow('Country', p.country) ||
+                        '<div class="col-12 text-muted small">No location details added.</div>';
+
+                    // About
+                    if (p.about) {
+                        document.getElementById('aboutSection').style.display = 'block';
+                        document.getElementById('aboutText').textContent = p.about;
+                    }
+
+                    // Pre-fill edit modal
+                    document.getElementById('editReligion').value = p.religion || '';
+                    document.getElementById('editMaritalStatus').value = p.maritalStatus || '';
+                    document.getElementById('editHeight').value = p.height || '';
+                    document.getElementById('editCaste').value = p.caste || '';
+                    document.getElementById('editEducation').value = p.education || '';
+                    document.getElementById('editOccupation').value = p.occupation || '';
+                    document.getElementById('editSalary').value = p.salary || '';
+                    document.getElementById('editState').value = p.state || '';
+                    document.getElementById('editCity').value = p.city || '';
+                    document.getElementById('editCountry').value = p.country || 'India';
+                    document.getElementById('editAbout').value = p.about || '';
+                })
+                .catch(() => {
+                    document.getElementById('personalInfo').innerHTML =
+                        '<div class="col-12 text-muted">Could not load profile.</div>';
+                });
+        }
+
+        function loadPreferences() {
+            authFetch(`${API_BASE}/profile/preferences`)
+                .then(r => r.json())
+                .then(data => {
+                    if (!data.data) return;
+                    const p = data.data;
+                    const prefHtml =
+                        infoRow('Age Range', p.minAge && p.maxAge ? `${p.minAge} - ${p.maxAge} yrs` : null) +
+                        infoRow('Religion', p.religion) +
+                        infoRow('Education', p.education) +
+                        infoRow('Occupation', p.occupation) +
+                        infoRow('Location', p.location);
+                    document.getElementById('prefInfo').innerHTML = prefHtml ||
+                        '<div class="col-12 text-muted small">No preferences set yet.</div>';
+
+                    document.getElementById('prefMinAge').value = p.minAge || '';
+                    document.getElementById('prefMaxAge').value = p.maxAge || '';
+                    document.getElementById('prefReligion').value = p.religion || '';
+                    document.getElementById('prefEducation').value = p.education || '';
+                    document.getElementById('prefLocation').value = p.location || '';
+                    document.getElementById('prefOccupation').value = p.occupation || '';
+                })
+                .catch(() => {});
+        }
+
+        function saveProfile() {
+            const data = {
+                religion: document.getElementById('editReligion').value,
+                maritalStatus: document.getElementById('editMaritalStatus').value,
+                height: document.getElementById('editHeight').value,
+                caste: document.getElementById('editCaste').value,
+                education: document.getElementById('editEducation').value,
+                occupation: document.getElementById('editOccupation').value,
+                salary: document.getElementById('editSalary').value,
+                state: document.getElementById('editState').value,
+                city: document.getElementById('editCity').value,
+                country: document.getElementById('editCountry').value,
+                about: document.getElementById('editAbout').value
+            };
+            authFetch(`${API_BASE}/profile/update`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            })
+            .then(r => r.json())
+            .then(() => {
+                bootstrap.Modal.getInstance(document.getElementById('editModal')).hide();
+                loadProfile();
+            })
+            .catch(err => {
+                console.error('Failed to save profile:', err);
+                alert('Failed to save profile. Please check your connection and try again.');
+            });
+        }
+
+        function savePreferences() {
+            const data = {
+                minAge: parseInt(document.getElementById('prefMinAge').value) || null,
+                maxAge: parseInt(document.getElementById('prefMaxAge').value) || null,
+                religion: document.getElementById('prefReligion').value || null,
+                education: document.getElementById('prefEducation').value || null,
+                location: document.getElementById('prefLocation').value || null,
+                occupation: document.getElementById('prefOccupation').value || null
+            };
+            authFetch(`${API_BASE}/profile/preferences`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            })
+            .then(() => {
+                bootstrap.Modal.getInstance(document.getElementById('prefModal')).hide();
+                loadPreferences();
+            })
+            .catch(err => {
+                console.error('Failed to save preferences:', err);
+                alert('Failed to save preferences. Please check your connection and try again.');
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            if (!getToken()) { window.location.href = '/login'; return; }
+            loadProfile();
+            loadPreferences();
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Matrimony - Find Your Perfect Match</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <style>
+        :root { --primary: #e84393; --secondary: #c0392b; }
+        .hero {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+        }
+        .hero h1 { font-size: 3rem; font-weight: 800; }
+        .btn-hero { background: #fff; color: var(--primary); font-weight: 700; border: none; padding: 14px 36px; border-radius: 50px; }
+        .btn-hero:hover { background: #f0f0f0; color: var(--secondary); }
+        .btn-outline-hero { border: 2px solid #fff; color: #fff; font-weight: 700; padding: 12px 36px; border-radius: 50px; background: transparent; }
+        .btn-outline-hero:hover { background: #fff; color: var(--primary); }
+        .feature-icon { font-size: 2.5rem; color: var(--primary); }
+        .section-heading { color: var(--secondary); font-weight: 700; }
+        .navbar-custom { background: rgba(255,255,255,0.15); backdrop-filter: blur(10px); }
+        .stat-number { font-size: 2.5rem; font-weight: 800; color: var(--primary); }
+    </style>
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg fixed-top navbar-custom">
+        <div class="container">
+            <a class="navbar-brand fw-bold fs-4" style="color:#fff;" href="/">💑 Matrimony</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="#features">Features</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="#how-it-works">How It Works</a>
+                    </li>
+                    <li class="nav-item ms-2">
+                        <a class="btn btn-hero btn-sm px-4" th:href="@{/login}">Login</a>
+                    </li>
+                    <li class="nav-item ms-2">
+                        <a class="btn btn-outline-hero btn-sm px-4" th:href="@{/register}">Register Free</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero text-white">
+        <div class="container text-center">
+            <h1 class="mb-3">Find Your Perfect<br>Life Partner 💑</h1>
+            <p class="lead mb-5 fs-5 opacity-90">
+                India's most trusted matrimony platform. Connect with verified profiles,<br>
+                find your ideal match, and begin your journey together.
+            </p>
+            <div class="d-flex justify-content-center gap-3 flex-wrap">
+                <a th:href="@{/register}" class="btn btn-hero btn-lg">
+                    <i class="bi bi-heart-fill me-2"></i>Create Free Profile
+                </a>
+                <a th:href="@{/login}" class="btn btn-outline-hero btn-lg">
+                    <i class="bi bi-box-arrow-in-right me-2"></i>Sign In
+                </a>
+            </div>
+            <div class="row mt-5 g-4">
+                <div class="col-md-3 col-6">
+                    <div class="stat-number text-white fw-bold">10L+</div>
+                    <small class="opacity-75">Happy Members</small>
+                </div>
+                <div class="col-md-3 col-6">
+                    <div class="stat-number text-white fw-bold">50K+</div>
+                    <small class="opacity-75">Successful Matches</small>
+                </div>
+                <div class="col-md-3 col-6">
+                    <div class="stat-number text-white fw-bold">100%</div>
+                    <small class="opacity-75">Verified Profiles</small>
+                </div>
+                <div class="col-md-3 col-6">
+                    <div class="stat-number text-white fw-bold">24/7</div>
+                    <small class="opacity-75">Customer Support</small>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="py-5 bg-light" id="features">
+        <div class="container">
+            <h2 class="text-center section-heading mb-5">Why Choose Us?</h2>
+            <div class="row g-4">
+                <div class="col-md-4 text-center">
+                    <div class="card h-100 border-0 shadow-sm p-4">
+                        <div class="feature-icon mb-3"><i class="bi bi-shield-check-fill"></i></div>
+                        <h5 class="fw-bold">Verified Profiles</h5>
+                        <p class="text-muted">Every profile is manually reviewed and verified by our team for authenticity and safety.</p>
+                    </div>
+                </div>
+                <div class="col-md-4 text-center">
+                    <div class="card h-100 border-0 shadow-sm p-4">
+                        <div class="feature-icon mb-3"><i class="bi bi-stars"></i></div>
+                        <h5 class="fw-bold">Smart Matching</h5>
+                        <p class="text-muted">Our AI-powered algorithm suggests the most compatible matches based on your preferences.</p>
+                    </div>
+                </div>
+                <div class="col-md-4 text-center">
+                    <div class="card h-100 border-0 shadow-sm p-4">
+                        <div class="feature-icon mb-3"><i class="bi bi-lock-fill"></i></div>
+                        <h5 class="fw-bold">100% Private & Secure</h5>
+                        <p class="text-muted">Your personal data is encrypted and fully protected. Share only what you choose to share.</p>
+                    </div>
+                </div>
+                <div class="col-md-4 text-center">
+                    <div class="card h-100 border-0 shadow-sm p-4">
+                        <div class="feature-icon mb-3"><i class="bi bi-chat-dots-fill"></i></div>
+                        <h5 class="fw-bold">Direct Messaging</h5>
+                        <p class="text-muted">Connect directly with matches through our secure in-app messaging system.</p>
+                    </div>
+                </div>
+                <div class="col-md-4 text-center">
+                    <div class="card h-100 border-0 shadow-sm p-4">
+                        <div class="feature-icon mb-3"><i class="bi bi-phone-fill"></i></div>
+                        <h5 class="fw-bold">Mobile App</h5>
+                        <p class="text-muted">Available on Android and iOS. Find your match anytime, anywhere, on the go.</p>
+                    </div>
+                </div>
+                <div class="col-md-4 text-center">
+                    <div class="card h-100 border-0 shadow-sm p-4">
+                        <div class="feature-icon mb-3"><i class="bi bi-people-fill"></i></div>
+                        <h5 class="fw-bold">Large Community</h5>
+                        <p class="text-muted">Access millions of profiles across all communities, religions and regions of India.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- How It Works -->
+    <section class="py-5" id="how-it-works">
+        <div class="container">
+            <h2 class="text-center section-heading mb-5">How It Works</h2>
+            <div class="row g-4 text-center">
+                <div class="col-md-3">
+                    <div class="rounded-circle d-inline-flex align-items-center justify-content-center mb-3"
+                         style="width:80px;height:80px;background:linear-gradient(135deg,#e84393,#c0392b);">
+                        <span class="text-white fw-bold fs-4">1</span>
+                    </div>
+                    <h5 class="fw-bold">Register Free</h5>
+                    <p class="text-muted">Create your profile using just your phone number. No email needed.</p>
+                </div>
+                <div class="col-md-3">
+                    <div class="rounded-circle d-inline-flex align-items-center justify-content-center mb-3"
+                         style="width:80px;height:80px;background:linear-gradient(135deg,#e84393,#c0392b);">
+                        <span class="text-white fw-bold fs-4">2</span>
+                    </div>
+                    <h5 class="fw-bold">Complete Profile</h5>
+                    <p class="text-muted">Add your details, preferences and photo to attract the right matches.</p>
+                </div>
+                <div class="col-md-3">
+                    <div class="rounded-circle d-inline-flex align-items-center justify-content-center mb-3"
+                         style="width:80px;height:80px;background:linear-gradient(135deg,#e84393,#c0392b);">
+                        <span class="text-white fw-bold fs-4">3</span>
+                    </div>
+                    <h5 class="fw-bold">Discover Matches</h5>
+                    <p class="text-muted">Browse verified profiles that match your criteria and send interests.</p>
+                </div>
+                <div class="col-md-3">
+                    <div class="rounded-circle d-inline-flex align-items-center justify-content-center mb-3"
+                         style="width:80px;height:80px;background:linear-gradient(135deg,#e84393,#c0392b);">
+                        <span class="text-white fw-bold fs-4">4</span>
+                    </div>
+                    <h5 class="fw-bold">Connect &amp; Meet</h5>
+                    <p class="text-muted">Once both show interest, start chatting and take the next step together.</p>
+                </div>
+            </div>
+            <div class="text-center mt-5">
+                <a th:href="@{/register}" class="btn btn-lg px-5 py-3 text-white fw-bold"
+                   style="background:linear-gradient(135deg,#e84393,#c0392b);border:none;border-radius:50px;">
+                    <i class="bi bi-heart-fill me-2"></i>Start Your Journey Today
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="py-4 text-center text-white" style="background:linear-gradient(135deg,#c0392b,#e84393);">
+        <div class="container">
+            <p class="mb-1 fw-bold fs-5">💑 Matrimony</p>
+            <p class="mb-0 opacity-75 small">&copy; 2024 Matrimony. All rights reserved. | Trusted by millions.</p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
